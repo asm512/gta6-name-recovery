@@ -1,0 +1,102 @@
+{
+  "updated": "2026-11-22",
+  "scope": "Hashed struct, field and enum names in the PSIN metadata of common.rpf, script.rpf and data.rpf (GTA VI, Xbox build 1.0.2.1)",
+  "total": 21492,
+  "resolved": 11625,
+  "by_kind": [
+    {
+      "kind": "field",
+      "resolved": 8764,
+      "total": 13937
+    },
+    {
+      "kind": "struct",
+      "resolved": 1171,
+      "total": 3797
+    },
+    {
+      "kind": "enum value",
+      "resolved": 1664,
+      "total": 3675
+    },
+    {
+      "kind": "enum",
+      "resolved": 26,
+      "total": 83
+    }
+  ],
+  "by_method": [
+    {
+      "method": "name list",
+      "count": 7165
+    },
+    {
+      "method": "game text",
+      "count": 252
+    },
+    {
+      "method": "word combination",
+      "count": 1984
+    },
+    {
+      "method": "cracked",
+      "count": 875
+    },
+    {
+      "method": "judged",
+      "count": 1349
+    }
+  ],
+  "history": [
+    {
+      "step": "Lower-cased hashing (the wrong assumption)",
+      "resolved": 167
+    },
+    {
+      "step": "Case-sensitive hashing, the game's own strings",
+      "resolved": 1191
+    },
+    {
+      "step": "Public name lists from earlier RAGE games",
+      "resolved": 7418
+    },
+    {
+      "step": "Word combinations with chance-match measurement",
+      "resolved": 9401
+    },
+    {
+      "step": "Crack and judge, round one",
+      "resolved": 10979
+    },
+    {
+      "step": "Crack and judge, round two",
+      "resolved": 11254
+    },
+    {
+      "step": "Topic vocabularies",
+      "resolved": 11408
+    },
+    {
+      "step": "Per-struct search and round three",
+      "resolved": 11625
+    }
+  ],
+  "accuracy": [
+    {
+      "method": "name list / game text",
+      "note": "The exact text exists elsewhere; a chance collision is about 1 in 200,000 per name."
+    },
+    {
+      "method": "word combination, cracked",
+      "note": "Accepted only where random decoy hashes show few chance matches; measured chance rate of a few percent."
+    },
+    {
+      "method": "per-struct search",
+      "note": "Holdout test on 1,260 hidden known names: 468 accepted, 458 right, 10 wrong (2.1%). On truly unknown names the same cut is estimated to be wrong about 8% of the time before judging; every such pick was then checked by a judge."
+    },
+    {
+      "method": "judged",
+      "note": "Picked by a language model from candidates that hash correctly. Error rate after judging has not been measured directly."
+    }
+  ]
+}
