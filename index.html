@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GTA VI name recovery</title>
+<meta name="description" content="Progress and method of recovering the hashed struct, field and enum names in the GTA VI metadata files.">
+<link rel="stylesheet" href="assets/style.css">
+<script>
+  // Apply a saved theme choice before first paint (per-viewer convenience only).
+  try { var t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="masthead">
+  <div class="wrap masthead-row">
+    <a class="site-title" href="#top">GTA VI name recovery</a>
+    <nav aria-label="Sections">
+      <a href="#progress">Progress</a>
+      <a href="#how">Method</a>
+      <a href="#names">Names</a>
+      <a href="#credits">Credits</a>
+      <button class="textbtn theme-toggle" type="button" id="theme-toggle">auto</button>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+<div class="wrap" id="top">
+
+  <section class="intro">
+    <h1>Recovering the names in GTA VI's metadata</h1>
+    <p class="byline">Research notes · GTA VI, Xbox build 1.0.2.1 · data of <span data-bind="updated">–</span></p>
+    <p class="lede">The game's data files describe every structure, field and option by a 32-bit number instead of by its name. This project works out which names those numbers stand for, so that modding tools can show <code>fMass</code> instead of <code>0x23762435</code>.</p>
+
+    <div class="lookup" id="converter">
+      <label for="conv-input" class="lookup-label">Look up a hash, or type a name to get its hash</label>
+      <div class="lookup-row">
+        <input id="conv-input" type="text" value="0x23762435" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="0x23762435 or fMass">
+        <button type="button" class="textbtn" id="conv-random">random</button>
+      </div>
+      <div class="lookup-out" id="conv-out" aria-hidden="true">
+        <span class="lk-from" id="conv-from">–</span>
+        <span class="lk-arrow">→</span>
+        <span class="lk-to" id="conv-to">–</span>
+        <button type="button" class="textbtn lk-copy" id="conv-copy" hidden>copy</button>
+      </div>
+      <p class="lookup-meta" id="conv-meta">Loading names…</p>
+      <p class="sr" aria-live="polite" id="conv-live"></p>
+      <p class="lookup-try">Try
+        <button type="button" class="textbtn" data-q="0x23762435">0x23762435</button>,
+        <button type="button" class="textbtn" data-q="0x858e9437">0x858e9437</button>,
+        <button type="button" class="textbtn" data-q="0xb4e0f8b0">0xb4e0f8b0</button>,
+        <button type="button" class="textbtn" data-q="0x20fccd1c">0x20fccd1c</button> or
+        <button type="button" class="textbtn" data-q="fInitialDragCoeff">fInitialDragCoeff</button>.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============================== 1 PROGRESS ============================== -->
+  <section id="progress" aria-labelledby="progress-h">
+    <h2 id="progress-h"><span class="secnum">1</span>Progress</h2>
+
+    <div class="load-error" id="load-error" hidden>
+      <p><strong>The data could not be loaded.</strong> This page reads <code>data/progress.json</code> and <code>data/names.tsv</code> when it opens. If you opened the file directly from disk, serve the folder over HTTP instead (for example <code>python -m http.server</code>).</p>
+    </div>
+
+    <div class="headline">
+      <p class="headline-pct" data-bind="percent">–</p>
+      <p class="headline-text"><strong data-bind="resolved">–</strong> of <span data-bind="total">–</span> hashed names recovered.<br>
+        <span class="muted">Scope: <span data-bind="scope">–</span>.</span></p>
+    </div>
+    <div class="meter-block">
+      <div class="meter-ceil-label" aria-hidden="true"><span>estimated ceiling</span></div>
+      <div class="meter" id="headline-meter" role="img" aria-label="Share of names recovered">
+        <div class="meter-fill" id="headline-fill"></div>
+        <div class="meter-ceiling"></div>
+      </div>
+      <div class="meter-scale" aria-hidden="true"><span>0</span><span>50%</span><span>100%</span></div>
+    </div>
+
+    <div class="two-col">
+      <figure class="fig">
+        <div class="hbars" id="chart-kind"></div>
+        <figcaption><span class="fignum">Figure 1.</span> Recovered names by kind, out of all hashed names of that kind.</figcaption>
+      </figure>
+
+      <figure class="fig">
+        <div class="hbars" id="chart-method"></div>
+        <figcaption><span class="fignum">Figure 2.</span> Recovered names by method. Solid: reliable. Grey<sup>*</sup>: chance rate measured. Hatched<sup>†</sup>: error rate not yet measured.</figcaption>
+      </figure>
+    </div>
+
+    <figure class="fig">
+      <div class="hbars history" id="chart-history"></div>
+      <figcaption><span class="fignum">Figure 3.</span> Names recovered after each step, against the total of <span data-bind="total">–</span>. The dark part of each bar is what that step added. The first bar is the early mistake described in 2.1.</figcaption>
+    </figure>
+  </section>
+
+  <!-- ============================== 2 METHOD ============================== -->
+  <section id="how" aria-labelledby="how-h" class="prose">
+    <h2 id="how-h"><span class="secnum">2</span>How it works</h2>
+
+    <h3 id="what-hash"><span class="secnum">2.1</span>What a hash is, and why the names are missing</h3>
+    <p>GTA VI, like Rockstar's earlier games, runs on the RAGE engine. Much of its configuration lives in binary metadata files (they start with the bytes <code>PSIN</code>). Each file first describes its own layout: the <em>structs</em> it contains (groups of values, such as a vehicle's handling data), the <em>fields</em> in each struct (such as its mass), and <em>enums</em> (fixed lists of options, whose entries are <em>enum values</em>).</p>
+    <p>The game does not need the human-readable names, so it stores only a <strong>hash</strong> of each name: a fixed-size number computed from the text. RAGE uses a 32-bit function called <em>joaat</em> (Bob Jenkins' "one-at-a-time" hash). Computing a hash from a name is instant. Going the other way is not possible: the number does not contain the text. The only way back is to guess a name, hash it, and see whether the number matches. The lookup at the top of this page does exactly that for whatever you type.</p>
+    <p>Struct, field and enum-value names are hashed exactly as written, so case matters: <code>fMass</code> and <code>fmass</code> give different numbers. (Values stored inside the data, such as model names, are hashed in lower case.) At the start of this work, names were lower-cased before hashing. That matched almost nothing: 167 names. Hashing them as written raised the game's own strings alone to 1,191.</p>
+
+    <h3 id="collisions"><span class="secnum">2.2</span>Why many texts share one hash</h3>
+    <p>A 32-bit hash has about 4.3 billion possible values, but there are far more possible names than that. So every hash is shared by a great many texts, almost all of them nonsense. For example, these three names all hash to <code>0x23762435</code>:</p>
+    <pre class="examples"><code>fMass                  the real name
+fJointCrowdFreeze
+fAimedPersonInteriors</code></pre>
+    <p>The last two were found in under a second by combining words that occur in other recovered names. They look plausible, which is the problem: a match proves only that the text hashes to the right number, not that it is the right name. Every technique below has to deal with this.</p>
+
+    <h3 id="lists"><span class="secnum">2.3</span>Names from earlier games</h3>
+    <p>Rockstar kept many names from game to game, and the community has published lists of names recovered from GTA V and Red Dead Redemption 2. Hashing every name in those lists and looking each one up is called a <em>dictionary attack</em>. The list in <a href="https://github.com/alexguirre/rage-parser-dumps">alexguirre/rage-parser-dumps</a> matched about 6,980 names on its own; CodeWalker and a few other sources added under 200 more, for 7,418 in total. Examples: <code>fMass</code>, <code>fInitialDragCoeff</code>, <code>fBrakeForce</code>, <code>fSteeringLock</code>.</p>
+    <p>These names are reliable. A name taken from a list is a short, specific piece of text; the chance that one of them hits the right hash by coincidence is about 1 in 200,000.</p>
+
+    <h3 id="combos"><span class="secnum">2.4</span>Recombining known words, and measuring chance</h3>
+    <p>Known names are split into words (<code>fInitialDragCoeff</code> becomes <code>f</code>, <code>Initial</code>, <code>Drag</code>, <code>Coeff</code>) and the words are recombined: two words together, a known name plus one word, <code>Min</code>/<code>Max</code> twins of a known name, and type prefixes such as <code>f</code> for floating-point numbers, checked against the field's real type. Searches can also be run per struct, using the words of the fields next to the missing one. This step brought the total to 9,401. Examples: <code>BlendInDurationMax</code>, <code>AngleMinDebug</code>.</p>
+    <p>Because these searches try many texts, some matches will be coincidences. To measure how many, every search is also run against <em>decoys</em>: random hashes that belong to no real name. Any match against a decoy is by definition chance, so the decoy hit rate tells how many of the real matches are probably chance too. Searches whose matches are mostly chance are thrown away. Names kept from this step carry a measured chance rate of a few percent.</p>
+
+    <h3 id="cracking"><span class="secnum">2.5</span>Probability-ranked cracking</h3>
+    <p>A small program written in Rust tries more than a billion candidate names per second. It does not try them in arbitrary order: it estimates how likely each word is in each position for each kind of field (for instance, the name of a float field usually starts with <code>f</code>) and tries the most probable combinations first. Only matches in the most probable region are accepted automatically. <code>fTorqueCurve</code> and the struct name <code>ChassisHandlingData</code> were found this way.</p>
+
+    <h3 id="judging"><span class="secnum">2.6</span>A language model judges the candidates</h3>
+    <p>Further out, brute force returns several matching texts per hash, like the three for <code>0x23762435</code> above. Picking the right one needs context, so language-model agents read each hash's candidates together with what is known about it: the value type, the struct it belongs to, the names of its sibling fields and a sample value from the data (a car with a mass of 1,630 suggests <code>fMass</code>, not <code>fJointCrowdFreeze</code>). They accept only names that make sense in that place. The agents also wrote topic vocabularies and per-struct vocabularies to feed back into the cracker.</p>
+    <p>Together with the cracker, this added about 2,200 names over several rounds, with shrinking returns: roughly 1,500 in the first round, then 400, then a few hundred. Of the current names, <span data-bind="judged">–</span> are marked as judged; the others from these rounds were accepted automatically and are marked as cracked.</p>
+
+    <h3 id="limits"><span class="secnum">2.7</span>Limits</h3>
+    <p><strong>Scope.</strong> The figure covers the metadata in three archives (<code>common.rpf</code>, <code>script.rpf</code>, <code>data.rpf</code>), not the whole game.</p>
+    <div id="accuracy">
+      <p><strong>Reliability differs by method.</strong> Names found in lists or in the game's own text are reliable (a chance collision is about 1 in 200,000 per name). Automatically built names (word combinations and cracking) carry a measured chance rate of a few percent. The error rate of model-judged names has <em>not been measured yet</em>; it is estimated at a few percent, and a held-out test is planned. The table in section 3 shows the method of every name.</p>
+    </div>
+    <p><strong>100% is not reachable this way.</strong> A long or unusual name cannot be pinned down from a 32-bit hash: many texts fit, and nothing in the data says which one is right. The realistic ceiling without the game executable is estimated at 60 to 70%.</p>
+    <p><strong>One section stays unreadable.</strong> One section of every file (<code>LSNS</code>) consists of 16-byte records with no visible structure. It cannot be read without a key or algorithm that is not in the game files.</p>
+  </section>
+
+  <!-- ============================== 3 NAMES ============================== -->
+  <section id="names" aria-labelledby="names-h">
+    <h2 id="names-h"><span class="secnum">3</span>Recovered names</h2>
+    <p class="measure">Every recovered name with its hash, kind and method. Search by name or by hash, with or without <code>0x</code>. The full list is also available as a <a href="data/names.tsv" download>tab-separated file</a>.</p>
+
+    <div class="filters" role="search">
+      <label class="f-search"><span class="sr">Search name or hash</span>
+        <input id="q" type="search" placeholder="Search name or hash" spellcheck="false" autocomplete="off" autocapitalize="off">
+      </label>
+      <label><span class="sr">Kind</span>
+        <select id="f-kind"><option value="">All kinds</option></select>
+      </label>
+      <label><span class="sr">Method</span>
+        <select id="f-method"><option value="">All methods</option></select>
+      </label>
+    </div>
+    <p class="count" id="count" aria-live="polite">Loading…</p>
+
+    <div class="table-wrap">
+      <table class="names">
+        <thead>
+          <tr>
+            <th scope="col"><button type="button" data-sort="name">Name</button></th>
+            <th scope="col"><button type="button" data-sort="hash">Hash</button></th>
+            <th scope="col"><button type="button" data-sort="kind">Kind</button></th>
+            <th scope="col"><button type="button" data-sort="method">Method</button></th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <button type="button" class="textbtn more" id="more" hidden>show more</button>
+
+    <dl class="notes">
+      <div><dt>name list</dt><dd>The name appears in a public list of names from earlier RAGE games. Reliable.</dd></div>
+      <div><dt>game text</dt><dd>The name is written out somewhere in the game's own files. Reliable.</dd></div>
+      <div><dt>word combination<sup>*</sup></dt><dd>Assembled automatically from words of known names. Measured chance rate of a few percent.</dd></div>
+      <div><dt>cracked<sup>*</sup></dt><dd>Found by the probability-ranked search. Measured chance rate of a few percent.</dd></div>
+      <div><dt>judged<sup>†</sup></dt><dd>Picked by a language model from brute-force candidates. Error rate not yet measured.</dd></div>
+    </dl>
+  </section>
+
+  <!-- ============================== 4 CREDITS ============================== -->
+  <section id="credits" aria-labelledby="credits-h" class="prose">
+    <h2 id="credits-h"><span class="secnum">4</span>Credits and legal notes</h2>
+    <p>This work stands on years of community research into the RAGE engine. Name lists were used as dictionaries: each name was hashed and kept only if its hash appears in the GTA VI metadata.</p>
+    <table class="credits">
+      <thead><tr><th scope="col">Source</th><th scope="col">Used for</th><th scope="col">Licence</th></tr></thead>
+      <tbody>
+        <tr><td><a href="https://github.com/alexguirre/rage-parser-dumps">alexguirre/rage-parser-dumps</a></td><td>Main name list (about 6,980 matches)</td><td>MIT</td></tr>
+        <tr><td><a href="https://github.com/dexyfex/CodeWalker">dexyfex/CodeWalker</a></td><td>Names</td><td>No licence file; MIT-style notice in the source</td></tr>
+        <tr><td><a href="https://github.com/DurtyFree/gta-v-data-dumps">DurtyFree/gta-v-data-dumps</a></td><td>Names</td><td>No licence</td></tr>
+        <tr><td><a href="https://github.com/femga/rdr3_discoveries">femga/rdr3_discoveries</a></td><td>Names</td><td>No licence</td></tr>
+        <tr><td><a href="https://github.com/alloc8or/gta5-nativedb-data">alloc8or/gta5-nativedb-data</a>, <a href="https://github.com/alloc8or/rdr3-nativedb-data">rdr3-nativedb-data</a></td><td>Names</td><td>No licence</td></tr>
+        <tr><td><a href="https://github.com/VIRUXE/rage-cli">VIRUXE/rage-cli</a></td><td>Reference</td><td>Unlicense</td></tr>
+        <tr><td><a href="https://github.com/ItsNotRexed/Leonida">ItsNotRexed/Leonida</a>, <a href="https://github.com/TrinitronClient/GTA6-Asset-Info">TrinitronClient/GTA6-Asset-Info</a></td><td>Community work on the same formats; nothing copied from them</td><td>GPL-3.0</td></tr>
+      </tbody>
+    </table>
+    <p><strong>No game content.</strong> This repository contains no game files, extracted assets or keys. It holds only 32-bit hashes, the names recovered for them, and text and code written for this project. It is independent interoperability research for modding tools and is not affiliated with or endorsed by Rockstar Games or Take-Two Interactive. Grand Theft Auto is a trademark of Take-Two Interactive.</p>
+  </section>
+
+</div>
+</main>
+
+<footer class="colophon">
+  <div class="wrap">
+    <p>Data: <a href="data/progress.json">progress.json</a>, <a href="data/names.tsv">names.tsv</a>. This page loads both when it opens.</p>
+  </div>
+</footer>
+
+<div class="tip" id="tip" role="tooltip" hidden></div>
+<script src="assets/app.js"></script>
+</body>
+</html>
