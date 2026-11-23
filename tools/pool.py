@@ -59,6 +59,8 @@ def context(h):
         parts.append('in ' + known.get(o, 'struct_%08x' % o))
         v = samples.get((o, h))
         if v: parts.append('value ' + v)
+        ref = members[o].get(h, (0, 0, 0))[2]
+        if ref in known: parts.append('holds ' + known[ref])
         if sib: parts.append('siblings ' + ', '.join(sorted(sib)[:9]))
     if h in members:
         fields = [known[x] for x in members[h] if x in known]

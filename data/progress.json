@@ -1,118 +1,72 @@
 {
-  "updated": "2026-11-22",
-  "scope": "Hashed struct, field and enum names in the PSIN metadata of common.rpf, script.rpf, data.rpf, levels.rpf and packs.rpf (GTA VI, Xbox build 1.0.2.1)",
-  "total": 26286,
-  "resolved": 13837,
+  "updated": "2026-11-23",
+  "scope": "every struct, field and enum name known to the game's metadata parser (GTA VI, Xbox build 1.0.2.1)",
+  "total": 116739,
+  "resolved": 48681,
   "by_kind": [
     {
       "kind": "field",
-      "resolved": 10700,
-      "total": 17230
-    },
-    {
-      "kind": "struct",
-      "resolved": 1321,
-      "total": 4923
+      "resolved": 28484,
+      "total": 52070
     },
     {
       "kind": "enum value",
-      "resolved": 1784,
-      "total": 3986
+      "resolved": 15242,
+      "total": 46101
+    },
+    {
+      "kind": "struct",
+      "resolved": 4103,
+      "total": 15070
     },
     {
       "kind": "enum",
-      "resolved": 32,
-      "total": 147
+      "resolved": 852,
+      "total": 3498
     }
   ],
   "by_method": [
     {
       "method": "name list",
-      "count": 8279
+      "count": 33419
     },
     {
       "method": "game text",
-      "count": 292
-    },
-    {
-      "method": "word combination",
-      "count": 1992
+      "count": 42
     },
     {
       "method": "cracked",
-      "count": 1555
+      "count": 10468
     },
     {
       "method": "judged",
-      "count": 1719
+      "count": 4752
     }
   ],
-  "history": [
+  "by_origin": [
     {
-      "step": "Lower-cased hashing (the wrong assumption)",
-      "resolved": 167,
-      "total": 21492
+      "origin": "Names used in the scanned data files",
+      "resolved": 14078,
+      "total": 25781
     },
     {
-      "step": "Case-sensitive hashing, the game's own strings",
-      "resolved": 1191,
-      "total": 21492
-    },
-    {
-      "step": "Public name lists from earlier RAGE games",
-      "resolved": 7418,
-      "total": 21492
-    },
-    {
-      "step": "Word combinations with chance-match measurement",
-      "resolved": 9401,
-      "total": 21492
-    },
-    {
-      "step": "Crack and judge, round one",
-      "resolved": 10979,
-      "total": 21492
-    },
-    {
-      "step": "Crack and judge, round two",
-      "resolved": 11254,
-      "total": 21492
-    },
-    {
-      "step": "Topic vocabularies",
-      "resolved": 11408,
-      "total": 21492
-    },
-    {
-      "step": "Per-struct search and round three",
-      "resolved": 11625,
-      "total": 21492
-    },
-    {
-      "step": "levels.rpf and packs.rpf added (4,794 more names to find), name lists applied",
-      "resolved": 12747
-    },
-    {
-      "step": "Crack and judge on the wider set, second scan of the game text",
-      "resolved": 13837
+      "origin": "Names found only in the executable's tables",
+      "resolved": 34603,
+      "total": 90958
     }
   ],
   "accuracy": [
     {
-      "method": "name list / game text",
-      "note": "The exact text exists elsewhere; a chance collision is about 1 in 200,000 per name."
+      "method": "name list, game text",
+      "note": "The exact text exists elsewhere, and about one such name in 4,000 is expected to be a chance collision. The largest loose sources are filtered to names built from words that parser names use."
     },
     {
-      "method": "word combination, cracked",
-      "note": "Accepted only where random decoy hashes show few chance matches; measured chance rate of a few percent. In a holdout test the cracker alone accepted 520 of 1,500 hidden known names: 518 right, 2 wrong (0.4%)."
-    },
-    {
-      "method": "per-struct search",
-      "note": "Holdout test on 1,260 hidden known names: 468 accepted, 458 right, 10 wrong (2.1%). On truly unknown names the same cut is estimated to be wrong about 8% of the time before judging; every such pick was then checked by a judge."
+      "method": "cracked",
+      "note": "Accepted automatically where random decoy hashes show few chance matches. The decoy counts put chance matches at about 3 to 4% of these names. In a holdout test the cracker accepted 520 hidden known names: 518 right, 2 wrong."
     },
     {
       "method": "judged",
-      "note": "Picked by a language model from candidates that hash correctly. Holdout test: 1,500 known names were hidden and sent through the same cracker and judges, mixed with as many truly unknown ones. The judges accepted 196 hidden names: 195 right, 1 wrong (0.5%); where the true name was among the candidates they found it 80% of the time. The one wrong pick came from 580 lines that had no true candidate; scaled to the lines judged in the real rounds that is about 2% of the judged names, and one event leaves a wide range (well under 1% to about 11%). The hidden names come from older games and may be easier than the unknown ones."
+      "note": "Picked by a language model from candidates that hash correctly. In holdout tests on 825 hidden known names, mixed with as many unknown ones, Claude Opus 5.5 accepted 167 (all right) and Claude Fable 5.2 accepted 197 (196 right, 1 wrong). Scaled to the lines judged for real, that suggests 1 to 2% of judged names are wrong, with a wide margin. The hidden names come from earlier games and may be easier than the unknown ones."
     }
   ]
 }

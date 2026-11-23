@@ -63,5 +63,18 @@ if os.path.exists(sp):
             owners[nh].add(h); members[h].setdefault(nh, (off, tr & 0xff, ref))
     for eh, vals in e2.items():
         for vh in vals: enum_of[vh].add(eh); enum_vals[eh].add(vh)
+# structs, defaults and enums from the tables of the executable
+xp = os.path.join(common.WORK, 'exe_schema.pkl')
+if os.path.exists(xp):
+    xs, xe = pickle.load(open(xp, 'rb'))
+    for h, (size, flags, ms) in xs.items():
+        for nh, kind, sub, off, default, ref in ms:
+            owners[nh].add(h)
+            if nh not in members[h]: members[h][nh] = (off, 0, ref)
+            elif ref and not members[h][nh][2]: members[h][nh] = (members[h][nh][0], members[h][nh][1], ref)
+            if default and (h, nh) not in samples: samples[(h, nh)] = 'default ' + default
+    for eh, vals in xe.items():
+        for v, vh in vals:
+            if vh > 0xffff: enum_of[vh].add(eh); enum_vals[eh].add(vh)
 pickle.dump((dict(owners), dict(members), samples, dict(enum_of), dict(enum_vals)), open(os.path.join(HERE, 'index.pkl'), 'wb'))
 print('fields', len(owners), 'structs', len(members), 'samples', len(samples), 'enums', len(enum_vals))
