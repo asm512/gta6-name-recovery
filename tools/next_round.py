@@ -22,6 +22,7 @@ open(extra, 'w', encoding='utf-8').write('\n'.join(sorted(acc.values())))
 # keep earlier judge files out of the way so their candidates are not offered twice
 old = os.path.join(HERE, 'judge_done'); os.makedirs(old, exist_ok=True)
 for f in os.listdir(os.path.join(HERE, 'judge')):
+    if not f.endswith(('.txt', '.out')): continue   # the usage log stays, the spending cap reads it
     shutil.move(os.path.join(HERE, 'judge', f), os.path.join(old, f))
 subprocess.run([py, os.path.join(common.TOOLS, 'prep.py'), extra], check=True)
 subprocess.run([py, os.path.join(common.TOOLS, 'run_all.py'), tag], check=True)
