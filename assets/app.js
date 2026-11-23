@@ -6,16 +6,16 @@
   var PAGE = 200;
 
   var KIND_LABEL = { 'field': 'Fields', 'struct': 'Structs', 'enum value': 'Enum values', 'enum': 'Enums' };
-  var METHOD_ORDER = ['name list', 'game text', 'word combination', 'cracked', 'judged'];
+  var METHOD_ORDER = ['name list', 'game text', 'cracked', 'judged'];
   var METHOD_REL = {
     'name list': 'reliable', 'game text': 'reliable',
-    'word combination': 'measured', 'cracked': 'measured',
+    'cracked': 'measured',
     'judged': 'unmeasured'
   };
   var REL_TEXT = {
     reliable: 'Reliable',
-    measured: 'Chance rate measured (a few percent)',
-    unmeasured: 'About 2% wrong in a holdout test, wide margin'
+    measured: 'About 3 to 4% expected to be chance matches',
+    unmeasured: 'Picked by a language model; 1 to 2% wrong by holdout tests'
   };
   var REL_MARK = { reliable: '', measured: '*', unmeasured: '†' };
 
@@ -140,8 +140,7 @@
     bind('scope', p.scope);
     bind('updated', p.updated);
     $('headline-fill').style.width = pct(p.resolved, p.total) + '%';
-    $('headline-meter').setAttribute('aria-label',
-      fmtPct(p.resolved, p.total) + ' of names recovered; estimated ceiling 60 to 70%');
+    $('headline-meter').setAttribute('aria-label', fmtPct(p.resolved, p.total) + ' of names recovered');
 
     var kind = $('chart-kind');
     kind.innerHTML = '';
@@ -173,23 +172,19 @@
       method.appendChild(track);
     });
 
-    var hist = $('chart-history');
-    hist.innerHTML = '';
-    var prev = 0;
-    p.history.forEach(function (h, i) {
-      var added = h.resolved - prev;
-      var segs = i === 0 || added < 0
-        ? [{ cls: 'hist-added', value: h.resolved }]
-        : [{ cls: 'hist-before', value: prev }, { cls: 'hist-added', value: added }];
-      if (segs.length === 2 && prev === 0) segs.shift();
-      var sign = added >= 0 ? '+' : '−';
-      hist.appendChild(barRow(h.step, segs,
-        valueNode(fmt.format(h.resolved), i === 0 ? '' : '(' + sign + fmt.format(Math.abs(added)) + ')'),
-        h.step + '\n' + fmt.format(h.resolved) + ' of ' + fmt.format(h.total || p.total) + ' names (' + fmtPct(h.resolved, h.total || p.total) + ')' +
-          (i === 0 ? '' : '\n' + sign + fmt.format(Math.abs(added)) + ' compared with the step before'),
-        p.total));
-      prev = h.resolved;
+    var origin = $('chart-origin');
+    origin.innerHTML = '';
+    (p.by_origin || []).forEach(function (o) {
+      origin.appendChild(barRow(o.origin,
+        [{ cls: 'kind', value: o.resolved }],
+        valueNode(fmtPct(o.resolved, o.total), fmt.format(o.resolved) + ' / ' + fmt.format(o.total)),
+        o.origin + '\n' + fmt.format(o.resolved) + ' of ' + fmt.format(o.total) + ' recovered (' + fmtPct(o.resolved, o.total) + ')',
+        o.total));
     });
+
+    // counts quoted in the text
+    p.by_method.forEach(function (m) { bind('n-' + m.method.replace(/ /g, '-'), fmt.format(m.count)); });
+    p.by_kind.forEach(function (k) { bind('t-' + k.kind.replace(/ /g, '-'), fmt.format(k.total)); });
 
     var judged = p.by_method.filter(function (m) { return m.method === 'judged'; })[0];
     bind('judged', judged ? fmt.format(judged.count) : '–');

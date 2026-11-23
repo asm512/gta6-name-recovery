@@ -177,8 +177,8 @@ nav a:hover { color: var(--ink); text-decoration: underline; }
 .hbar-value { font-size: 0.88rem; color: var(--ink-2); white-space: nowrap; min-width: 6.2em; text-align: right; }
 .hbar-value strong { color: var(--ink); font-weight: 600; }
 .hbar:hover .hbar-label { text-decoration: underline; text-decoration-color: var(--ink-3); }
-.history .hbar { grid-template-columns: minmax(120px, 18em) minmax(0, 1fr); }
-.history .hbar-value { min-width: 8.5em; }
+.history .hbar, .origin .hbar { grid-template-columns: minmax(120px, 18em) minmax(0, 1fr); }
+.history .hbar-value, .origin .hbar-value { min-width: 8.5em; }
 .seg.kind, .seg.rel-reliable, .seg.hist-added { background: var(--bar); }
 .seg.rel-measured { background: var(--bar-mid); }
 .seg.rel-unmeasured { background: repeating-linear-gradient(135deg, var(--bar-mid) 0 2px, transparent 2px 5px); box-shadow: inset 0 0 0 1px var(--bar-mid); }
@@ -241,7 +241,7 @@ table { border-collapse: collapse; width: 100%; }
   body { font-size: 16px; }
   nav { margin-left: 0; width: 100%; }
   .two-col { grid-template-columns: minmax(0, 1fr); }
-  .hbar, .history .hbar { grid-template-columns: minmax(0, 1fr); }
+  .hbar, .history .hbar, .origin .hbar { grid-template-columns: minmax(0, 1fr); }
   .filters { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .filters .f-search { grid-column: 1 / -1; }
   .notes div, .notes.accuracy div { grid-template-columns: minmax(0, 1fr); gap: 0; margin-bottom: 8px; }

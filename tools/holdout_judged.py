@@ -1,7 +1,8 @@
 """Holdout test of the crack-and-judge pipeline: known names are hidden, searched for and judged like unknown ones.
 
 usage: python holdout_judged.py setup [how many names] [seed]   hide names, relearn word lists, run the cracker, write judge files
-       python holdout_judged.py score                           after the judges wrote their .out files: right and wrong accepts
+       python holdout_judged.py score [folder]                  after the judges wrote their .out files: right and wrong accepts
+                                                                (folder under <work>/holdout_judged/crack, default judge)
 
 Only names found in name lists or game text are hidden, so the truth is certain. Everything runs in <work>/holdout_judged,
 a work folder of its own; the real results are not touched. Judge files hold the hidden names mixed with truly unknown
@@ -72,7 +73,7 @@ def setup(n, seed):
 def score():
     hidden = open(os.path.join(HOLD, 'hidden.txt'), encoding='utf-8').read().split()
     truth = {common.joaat_cs(nm): nm for nm in hidden}
-    J = os.path.join(HC, 'judge')
+    J = os.path.join(HC, sys.argv[2] if len(sys.argv) > 2 else 'judge')
     offered = {}
     for f in sorted(os.listdir(J)):
         if f.endswith('.txt'):
@@ -106,7 +107,7 @@ def score():
     }
     for k, v in res.items(): print('%-52s %s' % (k, v))
     for w, t in wrong: print('  wrong: %-40s truth: %s' % (w, t))
-    json.dump(res, open(os.path.join(HOLD, 'result.json'), 'w'), indent=2)
+    json.dump(res, open(os.path.join(HOLD, 'result_%s.json' % os.path.basename(J)), 'w'), indent=2)
 
 
 if __name__ == '__main__':

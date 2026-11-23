@@ -1,43 +1,60 @@
-"""Resolves the hashes found by schema_scan.py against everything already at hand: the name lists, the names
-recovered so far and the text inside the scanned metadata files. Prints counts per kind and writes
-<work>/scan_hits.pkl {hash: (name, source)}."""
-import os, sys, pickle, collections
+"""Resolves hashes added to the targets (by schema_scan.py or exe_tables.py) against the name lists at hand.
+
+Lists of parser names are taken as they are. The loose sources (every identifier of a code base or data dump) are
+large enough to hit a few dozen hashes by chance, so from those only names built from words that parser names use
+are kept. With --save the kept names that the names folder lacks are added to other-sources.txt there.
+usage: python scan_match.py [--save]"""
+import os, re, sys, pickle, collections
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import common
 from common import joaat_cs
 
 W = common.WORK
-targets, kinds, enums, structs = pickle.load(open(os.path.join(W, 'scan_schema.pkl'), 'rb'))
-old = pickle.load(open(os.path.join(W, 'targets_base.pkl' if os.path.exists(os.path.join(W, 'targets_base.pkl')) else 'targets.pkl'), 'rb'))
-new = {h: r for h, r in targets.items() if h not in old}
+T = pickle.load(open(os.path.join(W, 'targets.pkl'), 'rb'))
+TOK = re.compile(r'[A-Z]+(?![a-z])|[A-Z]?[a-z]+|[0-9]+|_+')
 
 
 def kind(r):
     return 'field' if 'field' in r else 'struct' if 'struct' in r else 'enum value' if 'enumval' in r else 'enum'
 
 
-hits = {}
-
-
-def test(names, source):
-    n = 0
-    for nm in names:
-        h = joaat_cs(nm)
-        if h in new and h not in hits: hits[h] = (nm, source); n += 1
-    return n
-
-
+listed = {}; vocab = collections.Counter()
 for f in sorted(os.listdir(common.NAMES_DIR)):
     if f.endswith('.txt'):
         names = open(os.path.join(common.NAMES_DIR, f), encoding='utf-8', errors='replace').read().split()
-        print('%-34s %7d names -> %d' % (f, len(names), test(names, 'name list' if f != 'built.txt' else 'built')))
+        for n in names:
+            for w in TOK.findall(n):
+                if len(w) >= 3: vocab[w.lower()] += 1
+            h = joaat_cs(n)
+            if h in T: listed.setdefault(h, n)
+print('names folder resolves', len(listed), 'of', len(T))
+
+
+def plain(n):
+    t = TOK.findall(n)
+    if ''.join(t) != n: return False
+    words = [w for w in t if w[0].isalpha()]
+    long_words = [w for w in words if len(w) >= 3]
+    if not long_words or any(len(w) < 2 for w in words) or any(vocab[w.lower()] < 3 for w in long_words): return False
+    return len(long_words) >= 2 or len(long_words[0]) >= 5
+
+
+extra = {}; dropped = 0
 lp = os.path.join(W, 'list_sources.pkl')
-if os.path.exists(lp):
-    for src, names in pickle.load(open(lp, 'rb')).items():
-        print('%-34s %7d names -> %d' % (src, len(names), test(names, 'name list')))
-tokens = pickle.load(open(os.path.join(W, 'scan_tokens.pkl'), 'rb'))
-print('%-34s %7d names -> %d' % ('text in the scanned files', len(tokens), test([t.decode('latin-1') for t in tokens], 'game text')))
-tot = collections.Counter(kind(r) for r in new.values()); got = collections.Counter(kind(new[h]) for h in hits)
-print('new hashes %d, resolved %d (%.1f%%): %s' % (len(new), len(hits), 100.0 * len(hits) / max(1, len(new)), {k: '%d/%d' % (got[k], tot[k]) for k in tot}))
-print('all hashes in the scanned archives %d, already among the earlier targets %d' % (len(targets), len(targets) - len(new)))
-pickle.dump(hits, open(os.path.join(W, 'scan_hits.pkl'), 'wb'))
+for src, names in (pickle.load(open(lp, 'rb')).items() if os.path.exists(lp) else ()):
+    strict = not src.startswith('parser-dumps/')
+    got = 0
+    for n in names:
+        h = joaat_cs(n)
+        if h in T and h not in listed and h not in extra:
+            if strict and not plain(n): dropped += 1; continue
+            extra[h] = n; got += 1
+    print('%-36s %7d names -> %5d new (about %.1f chance hits before the word check)' % (src, len(names), got, len(names) * (len(T) - len(listed)) / 2 ** 32))
+tot = collections.Counter(kind(r) for r in T.values()); have = collections.Counter(kind(T[h]) for h in list(listed) + list(extra))
+print('resolved by lists %d of %d: %s | dropped by the word check %d' % (len(listed) + len(extra), len(T), {k: '%d/%d' % (have[k], tot[k]) for k in tot}, dropped))
+if '--save' in sys.argv:
+    p = os.path.join(common.NAMES_DIR, 'other-sources.txt')
+    cur = set(open(p, encoding='utf-8').read().split()) if os.path.exists(p) else set()
+    cur.update(extra.values())
+    open(p, 'w', encoding='utf-8').write('\n'.join(sorted(cur)))
+    print('other-sources.txt now', len(cur), 'names')
