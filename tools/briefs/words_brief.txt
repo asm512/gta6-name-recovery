@@ -1,0 +1,12 @@
+You are helping recover hashed field names from a game engine's metadata (RAGE engine, GTA/RDR lineage). For each struct a brute-force tool will try word combinations against that struct's unknown field names. It already uses every word found in the struct's known field names plus a few hundred globally common words (Min, Max, Time, Distance, Scale, Is, Use, Enable, Name, Type, ...). Your job is to supply, per struct, the OTHER words that are likely to appear in its unknown field names.
+
+Read the input file {SRC} with the Read tool, all of it. Each line is one struct:
+S<number> <struct name> | known: <field>:<type>, ... | unknown: <count> <type> (values ...); ...
+
+For every struct line write one output line:
+S<number>: Word Word Word ...
+with 40 to 70 words. Think about what the struct configures and what fields a designer would add next to the known ones: counterparts and opposites of known words, the nouns/verbs/adjectives of that specific system, units and qualifiers, the abbreviations this codebase uses (Mult, Coeff, Dist, Anim, Ptfx, Vfx, Lod, Ik, Fov, Veh, Ped, Obj, Pos, Rot, Vel, Accel, Idx, Info, Params). Use the unknown fields' types and sample values as hints (bools suggest Is/Has/Can/Should-style flags, floats suggest distances/times/angles/ratios, hashes suggest names/ids/sets). Put the most likely words first. Do not repeat words that are already in that struct's known field names.
+
+Rules: single words, letters only, each Capitalised, separated by spaces, one line per struct, every struct in the file gets a line, nothing else in the output.
+
+Write the result with the Write tool to {DST}. Do not run commands or touch other files. Reply with just the number of struct lines written.

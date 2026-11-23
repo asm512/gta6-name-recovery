@@ -15,11 +15,11 @@
   var REL_TEXT = {
     reliable: 'Reliable',
     measured: 'Chance rate measured (a few percent)',
-    unmeasured: 'Error rate not yet measured'
+    unmeasured: 'About 2% wrong in a holdout test, wide margin'
   };
   var REL_MARK = { reliable: '', measured: '*', unmeasured: '†' };
 
-  // Method name with its reliability footnote mark (* measured, † not measured).
+  // Method name with its reliability footnote mark (* chance rate measured, † judged by a language model).
   function methodLabel(method) {
     var rel = METHOD_REL[method] || 'unmeasured';
     var s = el('span', 'meth rel-' + rel, method);
@@ -185,7 +185,7 @@
       var sign = added >= 0 ? '+' : '−';
       hist.appendChild(barRow(h.step, segs,
         valueNode(fmt.format(h.resolved), i === 0 ? '' : '(' + sign + fmt.format(Math.abs(added)) + ')'),
-        h.step + '\n' + fmt.format(h.resolved) + ' names (' + fmtPct(h.resolved, p.total) + ')' +
+        h.step + '\n' + fmt.format(h.resolved) + ' of ' + fmt.format(h.total || p.total) + ' names (' + fmtPct(h.resolved, h.total || p.total) + ')' +
           (i === 0 ? '' : '\n' + sign + fmt.format(Math.abs(added)) + ' compared with the step before'),
         p.total));
       prev = h.resolved;
