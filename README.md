@@ -6,7 +6,7 @@ Recovering the original names behind the 32-bit hashes in GTA VI's metadata file
 
 ## Where it stands
 
-As of 2026-11-22: **13,837 of 26,286 hashed names (52.6%)** recovered. These are the struct, field and enum names in the `PSIN` metadata of `common.rpf`, `script.rpf`, `data.rpf`, `levels.rpf` and `packs.rpf`. The last two were added on 2026-11-22 and brought 4,794 names nobody had looked for yet, which is why the percentage dipped from 54.1% while the count rose by 2,212. The live numbers are in [`data/progress.json`](data/progress.json); every name with its hash, kind and method is in [`data/names.tsv`](data/names.tsv).
+As of 2026-11-22: **13,839 of 26,286 hashed names (52.6%)** recovered. These are the struct, field and enum names in the `PSIN` metadata of `common.rpf`, `script.rpf`, `data.rpf`, `levels.rpf` and `packs.rpf`. The last two were added on 2026-11-22 and brought 4,794 names nobody had looked for yet, which is why the percentage dipped from 54.1% while the count rose by 2,214. The live numbers are in [`data/progress.json`](data/progress.json); every name with its hash, kind and method is in [`data/names.tsv`](data/names.tsv).
 
 Names come from public name lists of earlier RAGE games, the game's own text, automatic word combinations, a probability-ranked cracker, and candidates judged by a language model.
 

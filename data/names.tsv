@@ -349,6 +349,7 @@ be14289f	Alpha	field	name list
 df068772	alphaMin	field	name list
 8c9ccb9d	alphaPulseVariation	field	name list
 3a3dc275	alphaThresholdTexture	field	judged
+ce1eb1e5	alphaTransmission	field	game text
 50446f32	AlreadyWoundedModifier	field	name list
 49c84257	AlternateAnimals	field	word combination
 f8c57af3	AlternatePropSet	field	judged
@@ -12260,6 +12261,7 @@ b336999a	UnlockKey	field	cracked
 a0fb2381	UnlockWeaponHash	field	name list
 603de8df	Unmodified	enum value	name list
 8f25c8a2	UnreachableTarget	field	name list
+679c1b3d	Unresponsive	enum value	game text
 952f4eb1	UnsetFlags	field	word combination
 e67125b2	UnsetValue	field	judged
 e4e72a1d	Unspecified	enum value	name list

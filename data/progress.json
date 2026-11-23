@@ -1,12 +1,12 @@
 {
-  "updated": "2026-11-22",
+  "updated": "2026-11-23",
   "scope": "Hashed struct, field and enum names in the PSIN metadata of common.rpf, script.rpf, data.rpf, levels.rpf and packs.rpf (GTA VI, Xbox build 1.0.2.1)",
   "total": 26286,
-  "resolved": 13837,
+  "resolved": 13839,
   "by_kind": [
     {
       "kind": "field",
-      "resolved": 10700,
+      "resolved": 10701,
       "total": 17230
     },
     {
@@ -16,7 +16,7 @@
     },
     {
       "kind": "enum value",
-      "resolved": 1784,
+      "resolved": 1785,
       "total": 3986
     },
     {
@@ -32,7 +32,7 @@
     },
     {
       "method": "game text",
-      "count": 292
+      "count": 294
     },
     {
       "method": "word combination",
@@ -94,7 +94,7 @@
     },
     {
       "step": "Crack and judge on the wider set, second scan of the game text",
-      "resolved": 13837
+      "resolved": 13839
     }
   ],
   "accuracy": [
