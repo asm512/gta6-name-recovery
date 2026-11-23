@@ -6,16 +6,16 @@ Recovering the original names behind the 32-bit hashes in GTA VI's metadata (Xbo
 
 ## Where it stands
 
-As of 2026-11-23: **48,681 of 116,739 hashed names (41.7%)** recovered. The total is every struct, field and enum name the game's metadata parser knows, read from the tables in the executable and from the metadata files in the game's archives.
+As of 2026-11-23: **52,268 of 116,739 hashed names (44.8%)** recovered. The total is every struct, field and enum name the game's metadata parser knows, read from the tables in the executable and from the metadata files in the game's archives.
 
 | Kind | Recovered | Total |
 | --- | --- | --- |
-| Fields | 28,484 | 52,070 |
-| Enum values | 15,242 | 46,101 |
-| Structs | 4,103 | 15,070 |
-| Enums | 852 | 3,498 |
+| Fields | 29,057 | 52,070 |
+| Enum values | 18,154 | 46,101 |
+| Structs | 4,184 | 15,070 |
+| Enums | 873 | 3,498 |
 
-Of the 25,781 names that occur in the data files scanned so far, 14,078 (54.6%) are recovered. The live numbers are in [`data/progress.json`](data/progress.json); every name with its hash, kind and method is in [`data/names.tsv`](data/names.tsv).
+Of the 25,781 names that occur in the data files scanned so far, 14,240 (55.2%) are recovered. The live numbers are in [`data/progress.json`](data/progress.json); every name with its hash, kind and method is in [`data/names.tsv`](data/names.tsv).
 
 ## How
 
@@ -28,9 +28,9 @@ Of the 25,781 names that occur in the data files scanned so far, 14,078 (54.6%) 
 
 Each name carries its method, so you can filter.
 
-- **name list, game text** (33,461 names): the text exists elsewhere. About one in 4,000 is expected to be a chance collision.
-- **cracked** (10,468): accepted automatically where decoys show few chance matches. About 3 to 4% are expected to be chance matches.
-- **judged** (4,752): picked by a language model. In holdout tests on hidden known names the judges accepted 364 names and got 363 right; scaled to the real judging that suggests 1 to 2% wrong, with a wide margin.
+- **name list, game text** (33,473 names): the text exists elsewhere. About one in 4,000 is expected to be a chance collision.
+- **cracked** (12,091): accepted automatically where decoys show few chance matches. About 3 to 4% are expected to be chance matches.
+- **judged** (6,704): picked by a language model. In holdout tests on hidden known names the judges accepted 364 names and got 363 right; scaled to the real judging that suggests 1 to 2% wrong, with a wide margin.
 
 100% is not reachable from 32-bit hashes alone: a long or unusual name fits many texts, and nothing says which one is right.
 

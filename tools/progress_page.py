@@ -75,16 +75,18 @@ def status():
         tot[k] = tot.get(k, 0) + 1
         if h in got: have[k] = have.get(k, 0) + 1
     bars = []; active = False
-    sj = os.path.join(HERE, 'sjobs')
-    if os.path.isdir(sj):
+    for folder, label in (('sjobs', 'Per-struct search (%s): structs searched'), ('ejobs', 'Per-enum search (%s): enums searched')):
+        sj = os.path.join(HERE, folder)
+        if not os.path.isdir(sj): continue
         for tag in sorted(os.listdir(sj)):
             d = os.path.join(sj, tag); names = os.listdir(d)
             total = sum(1 for n in names if n.startswith('targets_'))
             started = [n for n in names if n.startswith('out_')]
-            fresh = any(time.time() - os.path.getmtime(os.path.join(d, n)) < 90 for n in started[-40:]) if started else False
+            newest = max((os.path.getmtime(os.path.join(d, n)) for n in started), default=0)
+            fresh = time.time() - newest < 180
             done = len(started) - (9 if fresh else 0)
-            if total and (fresh or len(started) < total):
-                bars.append({'label': 'Per-struct search (%s): structs searched' % tag, 'done': max(done, 0), 'total': total, 'cls': 'b'}); active = active or fresh
+            if total and len(started) < total and (fresh or time.time() - newest < 86400):
+                bars.append({'label': label % tag, 'done': max(done, 0), 'total': total, 'cls': 'b'}); active = active or fresh
     od = os.path.join(HERE, 'out')
     if os.path.isdir(od):
         rounds = {}

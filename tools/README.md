@@ -34,10 +34,12 @@ The public name lists are not redistributed here. Clone them into `<work>/lists/
 3. **Search**
    - `prep.py` learns, per kind of name, which words open, continue and end the known names. `run_all.py <tag>` runs the cracker per kind and keeps hits only below the score where random decoy hashes start to match.
    - `sprep.py` and `srun.py` search the missing fields of one struct with the words of its known fields; `erun.py` searches the missing values of one enum behind the prefix its known values share. `job.py`, `topics.py` and `run_topics.py` do the same with a vocabulary written for one topic.
+   - Where a job has few wanted names, as these narrow searches do, the cracker does not try the last word at all: it runs each wanted hash backwards through every last word once and looks up each shorter combination. The hits and decoy scores are the same as trying every combination; a typical job runs about 30 times faster.
 4. **Judge**
    - `pool.py <tag> <lines per file> <cracker output> ...` writes judge files: each unresolved name with its best candidates, type, owner struct, value, the type it refers to and the known sibling names.
    - `judge_api.py <folder> <prefix>` sends each file to a Claude model and writes the accepted names to a `.out` file next to it, with token use and cost per file. The instructions it gives are in the script; [`briefs/`](briefs/) holds the same instructions for use with an agent.
    - `merge.py [--save]` checks every accepted name (it must hash to its target and must have been offered) and adds it to the accepted set. `next_round.py <round tag> <judge tag>` relearns the word lists from the larger known set and repeats steps 3 and 4.
+   - `rounds.py <first cycle number>` runs steps 3 and 4 unattended, cycle after cycle, until a cycle adds few names or the judging cost reaches a cap. A narrow search's own pick is left out when a judge has already turned that candidate down.
 5. **Measure and publish**
    - `holdout_judged.py` and `holdout_struct.py` hide known names, search for them like unknown ones and count right and wrong answers.
    - `export_site.py` writes `data/names.tsv` and `data/progress.json`; `progress_page.py` serves a live progress page on localhost while jobs run.

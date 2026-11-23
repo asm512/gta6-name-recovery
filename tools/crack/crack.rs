@@ -2,6 +2,9 @@
 // names are sequences of tokens: a first token, middle tokens and a last token, each drawn from a list ranked by how
 // often it holds that position in known names. every sequence whose rank product is under a bound is hashed and tested
 // against the wanted hashes and against random decoys, so the chance match rate can be read off for any score cut.
+// when the wanted list is short the last token is not tried at all: the hash is run backwards through every last
+// token once, and each sequence without its last token needs a single lookup of the state it has reached.
+// CRACK_MODE=forward or CRACK_MODE=inverse forces one way; both print the same hits and decoy scores.
 // usage: crack <in dir> <class> <threads> <bound for 2 tokens> <bound for 3> ... (one bound per length, 0 skips)
 use std::collections::HashSet;
 use std::io::Write;
@@ -25,6 +28,85 @@ fn finish(mut h: u32) -> u32 {
     h.wrapping_add(h << 15)
 }
 
+const fn inverse(x: u32) -> u32 {
+    // inverse of an odd number modulo 2^32
+    let mut y = x;
+    let mut i = 0;
+    while i < 5 {
+        y = y.wrapping_mul(2u32.wrapping_sub(x.wrapping_mul(y)));
+        i += 1;
+    }
+    y
+}
+const INV_1025: u32 = inverse(1025);
+const INV_9: u32 = inverse(9);
+const INV_32769: u32 = inverse(32769);
+
+#[inline]
+fn unfinish(mut h: u32) -> u32 {
+    h = h.wrapping_mul(INV_32769);
+    h ^= h >> 11;
+    h ^= h >> 22;
+    h.wrapping_mul(INV_9)
+}
+
+#[inline]
+fn unfeed(mut h: u32, bytes: &[u8]) -> u32 {
+    for &b in bytes.iter().rev() {
+        h ^= h >> 6;
+        h ^= h >> 12;
+        h ^= h >> 24;
+        h = h.wrapping_mul(INV_1025);
+        h = h.wrapping_sub(b as u32);
+    }
+    h
+}
+
+// for every wanted or decoy hash and every last token: the state a sequence must have reached before that token
+struct Inverse {
+    shift: u32,
+    filter: Vec<u64>,
+    entries: Vec<(u32, u32, u32)>, // state, rank of the last token, hash
+}
+
+impl Inverse {
+    fn build(hashes: impl Iterator<Item = u32>, last: &[String]) -> Inverse {
+        let mut entries = Vec::new();
+        for h in hashes {
+            let u = unfinish(h);
+            for (z, tok) in last.iter().enumerate() {
+                entries.push((unfeed(u, tok.as_bytes()), z as u32, h));
+            }
+        }
+        entries.sort_unstable();
+        let mut bits = 16;
+        while bits < 28 && (1usize << bits) < entries.len() * 64 {
+            bits += 1;
+        }
+        let shift = 32 - bits;
+        let mut filter = vec![0u64; 1 << (bits - 6)];
+        for e in &entries {
+            let i = e.0 >> shift;
+            filter[(i >> 6) as usize] |= 1 << (i & 63);
+        }
+        Inverse { shift, filter, entries }
+    }
+
+    #[inline]
+    fn find(&self, state: u32) -> &[(u32, u32, u32)] {
+        let i = state >> self.shift;
+        if self.filter[(i >> 6) as usize] & (1 << (i & 63)) == 0 {
+            return &[];
+        }
+        let a = self.entries.partition_point(|e| e.0 < state);
+        let mut b = a;
+        while b < self.entries.len() && self.entries[b].0 == state {
+            b += 1;
+        }
+        &self.entries[a..b]
+    }
+}
+
 fn lines(path: &str, cap: usize) -> Vec<String> {
     std::fs::read_to_string(path).unwrap_or_default().lines().filter(|l| !l.is_empty()).take(cap).map(str::to_string).collect()
 }
@@ -33,6 +115,7 @@ struct Ctx<'a> {
     mid: &'a [String],
     last: &'a [String],
     bits: &'a [u64],
+    inverse: Option<&'a Inverse>,
     wanted: &'a HashSet<u32>,
     decoys: &'a HashSet<u32>,
     bound: u64,
@@ -48,6 +131,25 @@ fn rec(ctx: &Ctx, state: u32, prod: u64, mids_left: usize, stack: &mut Vec<u32>,
     if mids_left == 0 {
         let limit = (ctx.bound / prod).min(ctx.last.len() as u64) as usize;
         out.tried += limit as u64;
+        if let Some(inv) = ctx.inverse {
+            for &(_, z, h) in inv.find(state) {
+                if z as usize >= limit {
+                    continue;
+                }
+                let score = prod * (z as u64 + 1);
+                if ctx.wanted.contains(&h) {
+                    let mut name = first.to_string();
+                    for &m in stack.iter() {
+                        name.push_str(&ctx.mid[m as usize]);
+                    }
+                    name.push_str(&ctx.last[z as usize]);
+                    out.hits.push((score, h, name));
+                } else {
+                    out.decoy_scores.push(score);
+                }
+            }
+            return;
+        }
         for (z, tok) in ctx.last[..limit].iter().enumerate() {
             let h = finish(feed(state, tok.as_bytes()));
             if ctx.bits[(h >> 12) as usize] & (1 << ((h >> 6) & 63)) == 0 {
@@ -97,9 +199,15 @@ fn main() {
             decoys.insert(h);
         }
     }
-    let mut bits = vec![0u64; 1 << 20];
-    for h in wanted.iter().chain(&decoys) {
-        bits[(h >> 12) as usize] |= 1 << ((h >> 6) & 63);
+    // backwards pays while the table of states (hashes times last tokens) stays small
+    let mode = std::env::var("CRACK_MODE").unwrap_or_default();
+    let backwards = mode != "forward" && (mode == "inverse" || (wanted.len() + decoys.len()) * last.len() <= 8_000_000);
+    let inverse = if backwards { Some(Inverse::build(wanted.iter().chain(&decoys).copied(), &last)) } else { None };
+    let mut bits = vec![0u64; if backwards { 0 } else { 1 << 20 }];
+    if !backwards {
+        for h in wanted.iter().chain(&decoys) {
+            bits[(h >> 12) as usize] |= 1 << ((h >> 6) & 63);
+        }
     }
     eprintln!("{class}: {} wanted, {} first, {} mid, {} last tokens", wanted.len(), first.len(), mid.len(), last.len());
     let stdout = Mutex::new(std::io::BufWriter::new(std::io::stdout()));
@@ -108,7 +216,7 @@ fn main() {
         if bound == 0 {
             continue;
         }
-        let ctx = Ctx { mid: &mid, last: &last, bits: &bits, wanted: &wanted, decoys: &decoys, bound };
+        let ctx = Ctx { mid: &mid, last: &last, bits: &bits, inverse: inverse.as_ref(), wanted: &wanted, decoys: &decoys, bound };
         let next = AtomicUsize::new(0);
         let total = AtomicUsize::new(0);
         let started = std::time::Instant::now();
