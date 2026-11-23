@@ -89,7 +89,7 @@
 
       <figure class="fig">
         <div class="hbars" id="chart-method"></div>
-        <figcaption><span class="fignum">Figure 2.</span> Recovered names by method. Solid: reliable. Grey<sup>*</sup>: chance rate measured. Hatched<sup>†</sup>: error rate not yet measured.</figcaption>
+        <figcaption><span class="fignum">Figure 2.</span> Recovered names by method. Solid: reliable. Grey<sup>*</sup>: chance rate measured. Hatched<sup>†</sup>: picked by a language model, about 2% wrong in a holdout test.</figcaption>
       </figure>
     </div>
 
@@ -128,12 +128,12 @@ fAimedPersonInteriors</code></pre>
 
     <h3 id="judging"><span class="secnum">2.6</span>A language model judges the candidates</h3>
     <p>Further out, brute force returns several matching texts per hash, like the three for <code>0x23762435</code> above. Picking the right one needs context, so language-model agents read each hash's candidates together with what is known about it: the value type, the struct it belongs to, the names of its sibling fields and a sample value from the data (a car with a mass of 1,630 suggests <code>fMass</code>, not <code>fJointCrowdFreeze</code>). They accept only names that make sense in that place. The agents also wrote topic vocabularies and per-struct vocabularies to feed back into the cracker.</p>
-    <p>Together with the cracker, this added about 2,200 names over several rounds, with shrinking returns: roughly 1,500 in the first round, then 400, then a few hundred. Of the current names, <span data-bind="judged">–</span> are marked as judged; the others from these rounds were accepted automatically and are marked as cracked.</p>
+    <p>Together with the cracker, this added about 2,200 names over several rounds, with shrinking returns: roughly 1,500 in the first round, then 400, then a few hundred. A later round over the two archives added afterwards brought about 1,050 more, and a second scan of the game's text 40. Of the current names, <span data-bind="judged">–</span> are marked as judged; the others from these rounds were accepted automatically and are marked as cracked.</p>
 
     <h3 id="limits"><span class="secnum">2.7</span>Limits</h3>
-    <p><strong>Scope.</strong> The figure covers the metadata in three archives (<code>common.rpf</code>, <code>script.rpf</code>, <code>data.rpf</code>), not the whole game.</p>
+    <p><strong>Scope.</strong> The figure covers the metadata in five archives: <code>common.rpf</code>, <code>script.rpf</code>, <code>data.rpf</code> and, since 22 November 2026, <code>levels.rpf</code> and <code>packs.rpf</code>. The last two added 4,794 names to find, so the percentage dipped when they came in although the count of recovered names rose.</p>
     <div id="accuracy">
-      <p><strong>Reliability differs by method.</strong> Names found in lists or in the game's own text are reliable (a chance collision is about 1 in 200,000 per name). Automatically built names (word combinations and cracking) carry a measured chance rate of a few percent. The error rate of model-judged names has <em>not been measured yet</em>; it is estimated at a few percent, and a held-out test is planned. The table in section 3 shows the method of every name.</p>
+      <p><strong>Reliability differs by method.</strong> Names found in lists or in the game's own text are reliable (a chance collision is about 1 in 200,000 per name). Automatically built names (word combinations and cracking) carry a measured chance rate of a few percent. Model-judged names were about 2% wrong in a holdout test, with a wide margin. The table in section 3 shows the method of every name.</p>
     </div>
     <p><strong>100% is not reachable this way.</strong> A long or unusual name cannot be pinned down from a 32-bit hash: many texts fit, and nothing in the data says which one is right. The realistic ceiling without the game executable is estimated at 60 to 70%.</p>
     <p><strong>One section stays unreadable.</strong> One section of every file (<code>LSNS</code>) consists of 16-byte records with no visible structure. It cannot be read without a key or algorithm that is not in the game files.</p>
@@ -177,7 +177,7 @@ fAimedPersonInteriors</code></pre>
       <div><dt>game text</dt><dd>The name is written out somewhere in the game's own files. Reliable.</dd></div>
       <div><dt>word combination<sup>*</sup></dt><dd>Assembled automatically from words of known names. Measured chance rate of a few percent.</dd></div>
       <div><dt>cracked<sup>*</sup></dt><dd>Found by the probability-ranked search. Measured chance rate of a few percent.</dd></div>
-      <div><dt>judged<sup>†</sup></dt><dd>Picked by a language model from brute-force candidates. Error rate not yet measured.</dd></div>
+      <div><dt>judged<sup>†</sup></dt><dd>Picked by a language model from brute-force candidates. About 2% wrong in a holdout test, with a wide margin (see Limits).</dd></div>
     </dl>
   </section>
 

@@ -1,0 +1,23 @@
+# Nothing taken from the game belongs in this repository.
+# The tools keep extracted files and everything derived from them in a work folder outside the repo;
+# these rules are a second line of defence in case one is pointed inside it.
+/work/
+*-work/
+psin_files/
+psin_scan/
+schema_scan/
+*.psin
+*.rpf
+*.xvd
+*.pso
+*.ymt
+*.bin
+*.pkl
+*.exe
+*.pdb
+*.dll
+
+# local
+__pycache__/
+*.pyc
+.claude/

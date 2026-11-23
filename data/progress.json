@@ -1,84 +1,100 @@
 {
   "updated": "2026-11-22",
-  "scope": "Hashed struct, field and enum names in the PSIN metadata of common.rpf, script.rpf and data.rpf (GTA VI, Xbox build 1.0.2.1)",
-  "total": 21492,
-  "resolved": 11625,
+  "scope": "Hashed struct, field and enum names in the PSIN metadata of common.rpf, script.rpf, data.rpf, levels.rpf and packs.rpf (GTA VI, Xbox build 1.0.2.1)",
+  "total": 26286,
+  "resolved": 13837,
   "by_kind": [
     {
       "kind": "field",
-      "resolved": 8764,
-      "total": 13937
+      "resolved": 10700,
+      "total": 17230
     },
     {
       "kind": "struct",
-      "resolved": 1171,
-      "total": 3797
+      "resolved": 1321,
+      "total": 4923
     },
     {
       "kind": "enum value",
-      "resolved": 1664,
-      "total": 3675
+      "resolved": 1784,
+      "total": 3986
     },
     {
       "kind": "enum",
-      "resolved": 26,
-      "total": 83
+      "resolved": 32,
+      "total": 147
     }
   ],
   "by_method": [
     {
       "method": "name list",
-      "count": 7165
+      "count": 8279
     },
     {
       "method": "game text",
-      "count": 252
+      "count": 292
     },
     {
       "method": "word combination",
-      "count": 1984
+      "count": 1992
     },
     {
       "method": "cracked",
-      "count": 875
+      "count": 1555
     },
     {
       "method": "judged",
-      "count": 1349
+      "count": 1719
     }
   ],
   "history": [
     {
       "step": "Lower-cased hashing (the wrong assumption)",
-      "resolved": 167
+      "resolved": 167,
+      "total": 21492
     },
     {
       "step": "Case-sensitive hashing, the game's own strings",
-      "resolved": 1191
+      "resolved": 1191,
+      "total": 21492
     },
     {
       "step": "Public name lists from earlier RAGE games",
-      "resolved": 7418
+      "resolved": 7418,
+      "total": 21492
     },
     {
       "step": "Word combinations with chance-match measurement",
-      "resolved": 9401
+      "resolved": 9401,
+      "total": 21492
     },
     {
       "step": "Crack and judge, round one",
-      "resolved": 10979
+      "resolved": 10979,
+      "total": 21492
     },
     {
       "step": "Crack and judge, round two",
-      "resolved": 11254
+      "resolved": 11254,
+      "total": 21492
     },
     {
       "step": "Topic vocabularies",
-      "resolved": 11408
+      "resolved": 11408,
+      "total": 21492
     },
     {
       "step": "Per-struct search and round three",
-      "resolved": 11625
+      "resolved": 11625,
+      "total": 21492
+    },
+    {
+      "step": "levels.rpf and packs.rpf added (4,794 more names to find), name lists applied",
+      "resolved": 12747
+    },
+    {
+      "step": "Crack and judge on the wider set, second scan of the game text",
+      "resolved": 13837
     }
   ],
   "accuracy": [
@@ -88,7 +104,7 @@
     },
     {
       "method": "word combination, cracked",
-      "note": "Accepted only where random decoy hashes show few chance matches; measured chance rate of a few percent."
+      "note": "Accepted only where random decoy hashes show few chance matches; measured chance rate of a few percent. In a holdout test the cracker alone accepted 520 of 1,500 hidden known names: 518 right, 2 wrong (0.4%)."
     },
     {
       "method": "per-struct search",
@@ -96,7 +112,7 @@
     },
     {
       "method": "judged",
-      "note": "Picked by a language model from candidates that hash correctly. Error rate after judging has not been measured directly."
+      "note": "Picked by a language model from candidates that hash correctly. Holdout test: 1,500 known names were hidden and sent through the same cracker and judges, mixed with as many truly unknown ones. The judges accepted 196 hidden names: 195 right, 1 wrong (0.5%); where the true name was among the candidates they found it 80% of the time. The one wrong pick came from 580 lines that had no true candidate; scaled to the lines judged in the real rounds that is about 2% of the judged names, and one event leaves a wide range (well under 1% to about 11%). The hidden names come from older games and may be easier than the unknown ones."
     }
   ]
 }

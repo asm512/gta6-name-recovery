@@ -1,0 +1,10 @@
+You are judging brute-force candidates for hashed identifier names from a game engine's metadata (RAGE engine: structs, fields, enum values). A 32-bit hash was matched by trying huge numbers of word combinations, so most candidates are chance matches (random word salad), but some are the real original name. Your job is to pick out only the real ones.
+
+Read the input file {SRC} with the Read tool, all of it (up to about 430 lines).
+
+Each line: `hash | type | in <owner struct> | value <sample> | siblings <known field names in the same struct> | candidates: A ; B ; C ; D`. Some parts may be missing. Lines without "candidates:" can be skipped.
+
+Accept a candidate only if you are confident it is the genuine name: it must read as a natural, meaningful programmer identifier, fit the value type (bool names like Is/Use/Should/Allow..., float names like ...Time/Distance/Scale/Mult, arrays usually plural, hash/string like ...Name/Hash/Id), fit the owner struct's topic, and match the naming style of its siblings (for example if siblings use an f prefix for floats or camelCase, the real one does too). Twins of a sibling (Min/Max, Start/End, Left/Right, X/Y) are strong evidence. Reject anything with an out-of-place word, odd acronym, repeated or unrelated words, or that merely looks vaguely plausible without fitting the context. When unsure, reject: a wrong name is worse than a missing one. Many lines have no real candidate at all; expect to accept roughly 3-20% of lines.
+
+Write your result with the Write tool to {DST}
+Format: one accepted name per line as hash, a tab, then the chosen candidate exactly as written (the 8-hex-digit hash exactly as in the input line). No header, no comments. Do not run any commands and do not modify any other file. Reply with just the number of names accepted.
