@@ -1,34 +1,34 @@
 {
-  "updated": "2026-11-23",
+  "updated": "2026-11-24",
   "scope": "every struct, field and enum name known to the game's metadata parser (GTA VI, Xbox build 1.0.2.1)",
-  "total": 116739,
-  "resolved": 52268,
+  "total": 124575,
+  "resolved": 55294,
   "by_kind": [
     {
       "kind": "field",
-      "resolved": 29057,
-      "total": 52070
+      "resolved": 31007,
+      "total": 55672
     },
     {
       "kind": "enum value",
-      "resolved": 18154,
-      "total": 46101
+      "resolved": 18162,
+      "total": 46070
     },
     {
       "kind": "struct",
-      "resolved": 4184,
-      "total": 15070
+      "resolved": 5251,
+      "total": 19337
     },
     {
       "kind": "enum",
-      "resolved": 873,
-      "total": 3498
+      "resolved": 874,
+      "total": 3496
     }
   ],
   "by_method": [
     {
       "method": "name list",
-      "count": 33431
+      "count": 35370
     },
     {
       "method": "game text",
@@ -36,23 +36,23 @@
     },
     {
       "method": "cracked",
-      "count": 12091
+      "count": 12793
     },
     {
       "method": "judged",
-      "count": 6704
+      "count": 7089
     }
   ],
   "by_origin": [
     {
       "origin": "Names used in the scanned data files",
-      "resolved": 14240,
+      "resolved": 14268,
       "total": 25781
     },
     {
       "origin": "Names found only in the executable's tables",
-      "resolved": 38028,
-      "total": 90958
+      "resolved": 41026,
+      "total": 98794
     }
   ],
   "accuracy": [
