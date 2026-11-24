@@ -18,7 +18,7 @@ def sections(d):
     for i in range(count):
         s = d[pe + 24 + opt + i * 40: pe + 24 + opt + i * 40 + 40]
         vsize, va, rsize, roff = struct.unpack_from('<IIII', s, 8)
-        out.setdefault(s[:8].rstrip(b'\0').decode('latin-1'), (base + va, roff, rsize))
+        out.setdefault(s[:8].rstrip(b'\0').decode('latin-1'), (base + va, roff, rsize, vsize))
     return out
 
 
@@ -40,7 +40,7 @@ def default_text(d, rec, kind, sub):
 def read(path):
     d = open(path, 'rb').read()
     sec = sections(d)
-    dva, doff, dsize = sec['.data']; rva, roff, rsize = sec['.rdata']
+    dva, doff, dsize, dvsize = sec['.data']; rva, roff, rsize, _ = sec['.rdata']
 
     def in_data(va): return doff + (va - dva) if dva <= va < dva + dsize else None
     def in_rdata(va): return roff + (va - rva) if rva <= va < rva + rsize else None
@@ -56,21 +56,36 @@ def read(path):
         vals = [struct.unpack_from('<Iq', d, vo + k * 12) for k in range(count)]
         if any(abs(v) > 1 << 33 for _, v in vals) or sum(1 for vh, _ in vals if vh > 0xffff) * 10 < count * 9: continue
         enums[h] = [(v, vh) for vh, v in vals]; enum_at[dva + (o - doff)] = h
-    # struct records: pointer to the member table, hash, size, flags, one offset per member
-    structs = {}; struct_at = {}; raw = {}
+    # struct records: pointer to the member table, hash, size, flags, one offset per member.
+    # The member table starts with a count and one offset per member record; some tables keep extra bytes between
+    # the offsets and the first record. Each record ends its fixed part with 0xffff or 0xfffe.
+    structs = {}; struct_at = {}; raw = {}; empty = []
     for o in range(doff, doff + dsize - 24, 8):
-        mt = in_data(struct.unpack_from('<Q', d, o)[0])
-        if mt is None or d[mt] != 0: continue
+        q = struct.unpack_from('<Q', d, o)[0]
+        mt = in_data(q)
+        if mt is None:
+            # a struct without members of its own (a base class, a marker; an empty struct has size 1) points at a
+            # table only filled at run time, in the part of .data the file does not store: checked below against the
+            # flags real tables use
+            if dva + dsize <= q < dva + dvsize: empty.append(o)
+            continue
+        if d[mt] != 0: continue
         n = struct.unpack_from('<H', d, mt + 1)[0]
         if not (1 <= n <= 4000) or mt + 3 + 2 * n > doff + dsize: continue
         offs = struct.unpack_from('<%dH' % n, d, mt + 3)
-        if offs[0] != 3 + 2 * n or any(b <= a for a, b in zip(offs, offs[1:])): continue
-        if any(d[mt + r + 32:mt + r + 34] != b'\xff\xff' for r in offs): continue
+        if offs[0] < 3 + 2 * n or any(b <= a for a, b in zip(offs, offs[1:])): continue
+        if any(d[mt + r + 32:mt + r + 34] not in (b'\xff\xff', b'\xfe\xff') for r in offs): continue
         h, size, flags = struct.unpack_from('<IIH', d, o + 8)
         moffs = struct.unpack_from('<%dI' % n, d, o + 18)
         if h <= 0xffff or any(m > max(size, 1) + 64 for m in moffs): continue
         struct_at[dva + (o - doff)] = h; struct_at[dva + (o - doff) + 8] = h
         raw[h] = (size, flags, mt, offs, moffs)
+    common_flags = {f for f, c in collections.Counter(v[1] for v in raw.values()).items() if c >= 50}
+    for o in empty:
+        h, size, flags = struct.unpack_from('<IIH', d, o + 8)
+        if h <= 0xffff or h in raw or flags not in common_flags or not (1 <= size <= 1 << 16) or (size % 4 and size != 1): continue
+        struct_at[dva + (o - doff)] = h; struct_at[dva + (o - doff) + 8] = h
+        raw[h] = (size, flags, None, (), ())
     for h, (size, flags, mt, offs, moffs) in raw.items():
         members = []
         for k, r in enumerate(offs):
